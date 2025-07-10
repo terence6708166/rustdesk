@@ -65,7 +65,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       children: [
         buildLeftPane(context),
         if (!isIncomingOnly) const VerticalDivider(width: 1),
-        if (!isIncomingOnly) Expanded(child: buildCustomRightPane(context)),
+        if (!isIncomingOnly) Expanded(child: buildRightPane(context)),
       ],
     ));
   }
@@ -92,7 +92,25 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       buildTip(context),
       if (!isOutgoingOnly) buildIDBoard(context),
       if (!isOutgoingOnly) buildPasswordBoard(context),
-      // 移除幫助卡片和插件入口，只保留基本功能
+      FutureBuilder<Widget>(
+        future: Future.value(
+            Obx(() => buildHelpCards(stateGlobal.updateUrl.value))),
+        builder: (_, data) {
+          if (data.hasData) {
+            if (isIncomingOnly) {
+              if (isInHomePage()) {
+                Future.delayed(Duration(milliseconds: 300), () {
+                  _updateWindowSize();
+                });
+              }
+            }
+            return data.data!;
+          } else {
+            return const Offstage();
+          }
+        },
+      ),
+      buildPluginEntry(),
     ];
     if (isIncomingOnly) {
       children.addAll([
@@ -161,44 +179,49 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     );
   }
 
-  buildRightPane(BuildContext context) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: ConnectionPage(),
-    );
-  }
-
-  buildCustomRightPane(BuildContext context) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              '此版本僅提供被控端功能',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.titleLarge?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 16),
-            Text(
-              '請提供左邊的 ID 及 密碼 來進行遠端協助',
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+buildRightPane(BuildContext context) {
+  return Container(
+    color: Theme.of(context).scaffoldBackgroundColor,
+    child: Column(
+      children: [
+        // 停用功能提示 - 居中顯示
+        Expanded(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.block,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "目前僅提供被控遠端功能",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "請提供左邊 ID 及 密碼 來進行協助",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 16),
+                // 連接狀態顯示
+                OnlineStatusWidget(),
+              ],
+          ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
 
   buildIDBoard(BuildContext context) {
     final model = gFFI.serverModel;
@@ -410,18 +433,33 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isOutgoingOnly)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                translate("Your Desktop"),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
+          Column(
+            children: [
+              if (!isOutgoingOnly)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    translate("Your Desktop"),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+            ],
+          ),
           SizedBox(
             height: 10.0,
           ),
-          // 簡化提示文字，移除詳細說明
+          if (!isOutgoingOnly)
+            Text(
+              translate("desk_tip"),
+              overflow: TextOverflow.clip,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          if (isOutgoingOnly)
+            Text(
+              translate("outgoing_only_desk_tip"),
+              overflow: TextOverflow.clip,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
         ],
       ),
     );
