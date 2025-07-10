@@ -1389,7 +1389,8 @@ async fn check_id(
                                 return "Too frequent";
                             }
                             Ok(register_pk_response::Result::NOT_SUPPORT) => {
-                                return "server_not_support";
+                                // 跳過伺服器不支援檢查，強制允許修改 ID
+                                ok = true;
                             }
                             Ok(register_pk_response::Result::SERVER_ERROR) => {
                                 return "Server error";
