@@ -195,7 +195,7 @@ buildRightPane(BuildContext context) {
                ), 
                SizedBox(height: 16), 
                Text( 
-                 "目前僅提供被控遠端功能", 
+                 "目前僅提供被控遠端功能",
                  style: TextStyle( 
                    fontSize: 24, 
                    fontWeight: FontWeight.bold, 
