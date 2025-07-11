@@ -179,36 +179,36 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     );
   }
 
-buildRightPane(BuildContext context) {
-  return Container(
-    color: Theme.of(context).scaffoldBackgroundColor,
-    child: Column(
-      children: [
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.block,
-                size: 64,
-                color: Colors.grey,
-              ),
-              SizedBox(height: 16),
-              Text(
-                "目前僅提供被控遠端功能",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
-                ),
-              ),
-              SizedBox(height: 16),
+buildRightPane(BuildContext context) { 
+   return Container( 
+     color: Theme.of(context).scaffoldBackgroundColor, 
+     child: Column( 
+       children: [ 
+         Expanded( 
+           child: Column( 
+             mainAxisAlignment: MainAxisAlignment.center, 
+             children: [ 
+               Icon( 
+                 Icons.social_distancing,  // 替換為新圖標
+                 size: 64, 
+                 color: Colors.grey, 
+               ), 
+               SizedBox(height: 16), 
+               Text( 
+                 "目前僅提供被控遠端功能", 
+                 style: TextStyle( 
+                   fontSize: 24, 
+                   fontWeight: FontWeight.bold, 
+                   color: Colors.grey[700], 
+                 ), 
+               ), 
+                            SizedBox(height: 16),
               Text(
                 "★.★ 不需要 點安裝 ★.★",
                 style: TextStyle(
-                  fontSize: 24,                
-                  fontWeight: FontWeight.bold, 
-                  color: Colors.red,           
+                  fontSize: 24,                // 跟主標題一樣大
+                  fontWeight: FontWeight.bold, // 跟主標題一樣粗
+                  color: Colors.red,           // 紅色
                 ),
               ),
               SizedBox(height: 16),
