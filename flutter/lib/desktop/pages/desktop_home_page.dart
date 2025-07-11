@@ -184,37 +184,44 @@ buildRightPane(BuildContext context) {
     color: Theme.of(context).scaffoldBackgroundColor,
     child: Column(
       children: [
-        // 停用功能提示 - 居中顯示
         Expanded(
           child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.block,
-                  size: 64,
-                  color: Colors.grey,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.block,
+                size: 64,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 16),
+              Text(
+                "目前僅提供被控遠端功能",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
                 ),
-                SizedBox(height: 16),
-                Text(
-                  "目前僅提供被控遠端功能",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                "★.★ 不需要 點安裝 ★.★",
+                style: TextStyle(
+                  fontSize: 24,                
+                  fontWeight: FontWeight.bold, 
+                  color: Colors.red,           
                 ),
-                SizedBox(height: 8),
-                Text(
-                  "請提供左邊 ID 及 密碼 來進行協助",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
+              ),
+              SizedBox(height: 16),
+              Text(
+                "請直接提供左邊 ID 及 密碼 來進行遠端協助",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
                 ),
-                SizedBox(height: 16),
-                // 連接狀態顯示
-                OnlineStatusWidget(),
-              ],
+              ),
+              SizedBox(height: 16),
+              OnlineStatusWidget(),
+            ],
           ),
         ),
       ],
