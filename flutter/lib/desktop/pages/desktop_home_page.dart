@@ -211,12 +211,9 @@ buildRightPane(BuildContext context) {
                     color: Colors.grey[600],
                   ),
                 ),
-				//連接就緒靠中
-              SizedBox(height: 16),
-              Center(
-                child: OnlineStatusWidget(),
-              ),
-			      // 或者用 Align(alignment: Alignment.center, child: OnlineStatusWidget(),)
+                SizedBox(height: 16),
+                // 連接狀態顯示
+                OnlineStatusWidget(),
               ],
           ),
         ),
