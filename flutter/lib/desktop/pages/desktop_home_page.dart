@@ -190,8 +190,8 @@ buildRightPane(BuildContext context) {
              children: [ 
                Icon( 
                  // 替換為新圖標
-				 Icons.social_distancing,
-                 size: 64, 
+				 Icons.social_distance,
+				 size: 64, 
                  color: Colors.grey, 
                ), 
                SizedBox(height: 16), 
