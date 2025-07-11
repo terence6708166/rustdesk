@@ -189,7 +189,8 @@ buildRightPane(BuildContext context) {
              mainAxisAlignment: MainAxisAlignment.center, 
              children: [ 
                Icon( 
-                 Icons.social_distancing,  // 替換為新圖標
+                 // 替換為新圖標
+				 Icons.social_distancing,
                  size: 64, 
                  color: Colors.grey, 
                ), 
@@ -206,9 +207,12 @@ buildRightPane(BuildContext context) {
               Text(
                 "★.★ 不需要 點安裝 ★.★",
                 style: TextStyle(
-                  fontSize: 24,                // 跟主標題一樣大
-                  fontWeight: FontWeight.bold, // 跟主標題一樣粗
-                  color: Colors.red,           // 紅色
+                  // 跟主標題一樣大
+				  fontSize: 24,
+                  // 跟主標題一樣粗
+				  fontWeight: FontWeight.bold, 
+                  // 紅色
+				  color: Colors.red,
                 ),
               ),
               SizedBox(height: 16),
