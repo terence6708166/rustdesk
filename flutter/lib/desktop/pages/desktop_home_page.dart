@@ -188,11 +188,15 @@ buildRightPane(BuildContext context) {
            child: Column( 
              mainAxisAlignment: MainAxisAlignment.center, 
              children: [ 
-               Icon( 
-                 // 替換為左右箭頭圖標
-				 Icons.social_distance,
-				 size: 64, 
-                 color: Colors.blue,  //藍色
+               Container(
+                 width: 367,
+                 height: 125,
+                 child: Image.asset(
+                   'assets/logo.png',
+                   width: 367,
+                   height: 125,
+                   fit: BoxFit.contain,
+                 ),
                ), 
                SizedBox(height: 16), 
                Text( 
