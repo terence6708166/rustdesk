@@ -35,7 +35,7 @@ class DesktopHomePage extends StatefulWidget {
 const borderColor = Color(0xFF2F65BA);
 
 class _DesktopHomePageState extends State<DesktopHomePage>
-    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver, WindowListener {
   final _leftPaneScrollController = ScrollController();
 
   @override
@@ -631,17 +631,46 @@ buildRightPane(BuildContext context) {
       return const SizedBox();
     }
     void closeCard() async {
-      if (closeOption != null) {
-        await bind.mainSetLocalOption(key: closeOption, value: 'N');
-        if (bind.mainGetLocalOption(key: closeOption) == 'N') {
+      bool shouldClose = true;
+      
+      // 如果是未安裝版本，顯示確認對話框
+      if (!bind.mainIsInstalled()) {
+        final bool? userConfirmed = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('確認'),
+              content: Text('關閉此視窗後無法進行遠端連線，是否確認關閉視窗。'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('確認'),
+                ),
+              ],
+            );
+          },
+        );
+        shouldClose = userConfirmed == true;
+      }
+
+      // 只有在確認關閉時才執行關閉邏輯
+      if (shouldClose) {
+        if (closeOption != null) {
+          await bind.mainSetLocalOption(key: closeOption, value: 'N');
+          if (bind.mainGetLocalOption(key: closeOption) == 'N') {
+            setState(() {
+              isCardClosed = true;
+            });
+          }
+        } else {
           setState(() {
             isCardClosed = true;
           });
         }
-      } else {
-        setState(() {
-          isCardClosed = true;
-        });
       }
     }
 
@@ -743,6 +772,7 @@ buildRightPane(BuildContext context) {
   @override
   void initState() {
     super.initState();
+    windowManager.addListener(this);
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
       await gFFI.serverModel.fetchID();
       final error = await bind.mainGetError();
@@ -905,11 +935,53 @@ buildRightPane(BuildContext context) {
   }
 
   @override
+  void onWindowClose() async {
+    // 如果是未安裝版本，顯示確認對話框
+    if (!bind.mainIsInstalled()) {
+      final bool? userConfirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('確認'),
+            content: Text('關閉此視窗後無法進行遠端連線，是否確認關閉視窗。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('確認'),
+              ),
+            ],
+          );
+        },
+      );
+      
+      if (userConfirmed == true) {
+        // 完全退出應用程序
+        await windowManager.close();
+        if (Platform.isWindows) {
+          exit(0);
+        }
+      }
+    } else {
+      // 已安裝版本直接關閉
+      await windowManager.close();
+      if (Platform.isWindows) {
+        exit(0);
+      }
+    }
+    super.onWindowClose();
+  }
+
+  @override
   void dispose() {
     _uniLinksSubscription?.cancel();
     Get.delete<RxBool>(tag: 'stop-service');
     _updateTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    windowManager.removeListener(this);
     super.dispose();
   }
 

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -428,6 +429,38 @@ class _DesktopTabState extends State<DesktopTab>
   @override
   void onWindowClose() async {
     mainWindowClose() async => await windowManager.hide();
+    
+    // 主窗口关闭确认对话框
+    mainWindowCloseWithConfirmation() async {
+      final bool? userConfirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('確認'),
+            content: Text('關閉此視窗後無法進行遠端連線，是否確認關閉視窗。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('確認'),
+              ),
+            ],
+          );
+        },
+      );
+      
+      if (userConfirmed == true) {
+        // 完全退出應用程序而不是僅隱藏窗口
+        await windowManager.close();
+        if (Platform.isWindows) {
+          exit(0);
+        }
+      }
+    }
+    
     notMainWindowClose(WindowController windowController) async {
       if (controller.length != 0) {
         debugPrint("close not empty multiwindow from taskbar");
@@ -470,10 +503,10 @@ class _DesktopTabState extends State<DesktopTab>
         await windowManager.setFullScreen(false);
         await macOSWindowClose(
           () async => await windowManager.isFullScreen(),
-          mainWindowClose,
+          mainWindowCloseWithConfirmation,
         );
       } else {
-        await mainWindowClose();
+        await mainWindowCloseWithConfirmation();
       }
     } else {
       // it's safe to hide the subwindow
