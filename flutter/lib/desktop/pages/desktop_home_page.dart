@@ -188,13 +188,11 @@ buildRightPane(BuildContext context) {
            child: Column( 
              mainAxisAlignment: MainAxisAlignment.center, 
              children: [ 
-               Container(
+               SizedBox(
                  width: 367,
                  height: 125,
                  child: Image.asset(
                    'assets/logo.png',
-                   width: 367,
-                   height: 125,
                    fit: BoxFit.contain,
                  ),
                ), 
