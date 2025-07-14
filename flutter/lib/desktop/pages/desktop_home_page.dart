@@ -965,6 +965,8 @@ buildRightPane(BuildContext context) {
           exit(0);
         }
       }
+      // 如果用戶取消，不調用 super.onWindowClose()，直接返回
+      return;
     } else {
       // 已安裝版本直接關閉
       await windowManager.close();
@@ -972,7 +974,6 @@ buildRightPane(BuildContext context) {
         exit(0);
       }
     }
-    super.onWindowClose();
   }
 
   @override
