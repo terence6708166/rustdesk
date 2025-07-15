@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';  // 新增這行
 import 'dart:math';
 import 'dart:ui' as ui;
 
@@ -295,6 +296,10 @@ class _DesktopTabState extends State<DesktopTab>
   final _saveFrameDebounce = Debouncer(delay: Duration(seconds: 1));
   Timer? _macOSCheckRestoreTimer;
   int _macOSCheckRestoreCounter = 0;
+  
+  // 防止重複關閉請求的全局狀態
+static bool _globalIsClosing = false;
+static DateTime? _lastCloseAttempt;
 
   bool get showLogo => widget.showLogo;
   bool get showTitle => widget.showTitle;
@@ -339,6 +344,13 @@ class _DesktopTabState extends State<DesktopTab>
     DesktopMultiWindow.addListener(this);
     windowManager.addListener(this);
 
+// 為主窗口的未安裝版本設置初始關閉防護
+if (isMainWindow && !bind.mainIsInstalled()) {
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await windowManager.setPreventClose(true);
+    debugPrint("[DesktopTab] 已設置關閉防護");
+  });
+}
     Future.delayed(Duration(milliseconds: 500), () {
       if (isMainWindow) {
         windowManager.isMaximized().then((maximized) {
@@ -360,13 +372,19 @@ class _DesktopTabState extends State<DesktopTab>
     });
   }
 
-  @override
-  void dispose() {
-    DesktopMultiWindow.removeListener(this);
-    windowManager.removeListener(this);
-    _macOSCheckRestoreTimer?.cancel();
-    super.dispose();
+
+@override
+void dispose() {
+  DesktopMultiWindow.removeListener(this);
+  windowManager.removeListener(this);
+  _macOSCheckRestoreTimer?.cancel();
+  // 重置全局關閉狀態
+  if (isMainWindow) {
+    _globalIsClosing = false;
+    _lastCloseAttempt = null;
   }
+  super.dispose();
+}
 
   void _setMaximized(bool maximize) {
     stateGlobal.setMaximized(maximize);
@@ -428,6 +446,72 @@ class _DesktopTabState extends State<DesktopTab>
   @override
   void onWindowClose() async {
     mainWindowClose() async => await windowManager.hide();
+	
+// 主窗口关闭确认对话框
+mainWindowCloseWithConfirmation() async {
+  // 防止重複觸發 - 使用全局標誌和時間檢查
+  final now = DateTime.now();
+  if (_globalIsClosing || 
+      (_lastCloseAttempt != null && now.difference(_lastCloseAttempt!).inMilliseconds < 500)) {
+    debugPrint("[DesktopTab] 忽略重複的關閉請求");
+    return;
+  }
+  
+  _lastCloseAttempt = now;
+  
+  // 如果是未安裝版本，顯示確認對話框
+  if (!bind.mainIsInstalled()) {
+    _globalIsClosing = true;
+    
+    try {
+      final bool? userConfirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false, // 防止點擊外部關閉對話框
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('確認'),
+            content: Text('關閉此視窗後無法進行遠端連線，是否確認關閉視窗。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('確認'),
+              ),
+            ],
+          );
+        },
+      );
+      
+      if (userConfirmed == true) {
+        // 用戶確認關閉，取消防止關閉並退出
+        await windowManager.setPreventClose(false);
+        await windowManager.close();
+        if (Platform.isWindows) {
+          exit(0);
+        }
+      } else {
+        // 用戶取消，重置關閉狀態並重新設置防止關閉
+        _globalIsClosing = false;
+        await windowManager.setPreventClose(true);
+        debugPrint("[DesktopTab] 用戶取消關閉，重新設置防護");
+      }
+    } catch (e) {
+      debugPrint("[DesktopTab] 錯誤: $e");
+      _globalIsClosing = false;
+      await windowManager.setPreventClose(true);
+    }
+  } else {
+    // 已安裝版本直接關閉
+    await windowManager.setPreventClose(false);
+    await windowManager.close();
+    if (Platform.isWindows) {
+      exit(0);
+    }
+  }
+};
     notMainWindowClose(WindowController windowController) async {
       if (controller.length != 0) {
         debugPrint("close not empty multiwindow from taskbar");
@@ -465,17 +549,20 @@ class _DesktopTabState extends State<DesktopTab>
       if (rustDeskWinManager.getActiveWindows().contains(kMainWindowId)) {
         await rustDeskWinManager.unregisterActiveWindow(kMainWindowId);
       }
-      // macOS specific workaround, the window is not hiding when in fullscreen.
-      if (isMacOS && await windowManager.isFullScreen()) {
-        await windowManager.setFullScreen(false);
-        await macOSWindowClose(
-          () async => await windowManager.isFullScreen(),
-          mainWindowClose,
-        );
-      } else {
-        await mainWindowClose();
-      }
-    } else {
+ 
+  // macOS specific workaround, the window is not hiding when in fullscreen.
+  if (isMacOS && await windowManager.isFullScreen()) {
+    await windowManager.setFullScreen(false);
+    await macOSWindowClose(
+      () async => await windowManager.isFullScreen(),
+      mainWindowCloseWithConfirmation,
+    );
+  } else {
+    await mainWindowCloseWithConfirmation();  //修改
+  }
+  // 不調用 super.onWindowClose() 避免重複處理
+  return;  
+} else {
       // it's safe to hide the subwindow
       final controller = WindowController.fromWindowId(kWindowId!);
       if (isMacOS) {
