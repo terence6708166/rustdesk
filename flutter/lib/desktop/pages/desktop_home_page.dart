@@ -35,7 +35,7 @@ class DesktopHomePage extends StatefulWidget {
 const borderColor = Color(0xFF2F65BA);
 
 class _DesktopHomePageState extends State<DesktopHomePage>
-    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver, WindowListener {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   final _leftPaneScrollController = ScrollController();
 
   @override
@@ -772,12 +772,7 @@ buildRightPane(BuildContext context) {
   @override
   void initState() {
     super.initState();
-    windowManager.addListener(this);
-    
-    // 為未安裝版本設置初始關閉防護
-    if (!bind.mainIsInstalled()) {
-      windowManager.setPreventClose(true);
-    }
+    // 窗口關閉事件現在由 DesktopTabBarWidget 處理，避免重複監聽
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
       await gFFI.serverModel.fetchID();
       final error = await bind.mainGetError();
@@ -939,74 +934,7 @@ buildRightPane(BuildContext context) {
     }
   }
 
-  static bool _globalIsClosing = false;
-  static DateTime? _lastCloseAttempt;
-
-  @override
-  void onWindowClose() async {
-    // 防止重複觸發 - 使用全局標誌和時間檢查
-    final now = DateTime.now();
-    if (_globalIsClosing || 
-        (_lastCloseAttempt != null && now.difference(_lastCloseAttempt!).inMilliseconds < 500)) {
-      debugPrint("[onWindowClose] 忽略重複的關閉請求");
-      return;
-    }
-    
-    _lastCloseAttempt = now;
-    
-    // 如果是未安裝版本，顯示確認對話框
-    if (!bind.mainIsInstalled()) {
-      _globalIsClosing = true;
-      
-      try {
-        final bool? userConfirmed = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false, // 防止點擊外部關閉對話框
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('確認'),
-              content: Text('關閉此視窗後無法進行遠端連線，是否確認關閉視窗。'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('取消'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: Text('確認'),
-                ),
-              ],
-            );
-          },
-        );
-        
-        if (userConfirmed == true) {
-          // 用戶確認關閉，取消防止關閉並退出
-          await windowManager.setPreventClose(false);
-          await windowManager.close();
-          if (Platform.isWindows) {
-            exit(0);
-          }
-        } else {
-          // 用戶取消，重置關閉狀態並重新設置防止關閉
-          _globalIsClosing = false;
-          await windowManager.setPreventClose(true);
-          debugPrint("[onWindowClose] 用戶取消關閉，重新設置防護");
-        }
-      } catch (e) {
-        debugPrint("[onWindowClose] 錯誤: $e");
-        _globalIsClosing = false;
-        await windowManager.setPreventClose(true);
-      }
-    } else {
-      // 已安裝版本直接關閉
-      await windowManager.setPreventClose(false);
-      await windowManager.close();
-      if (Platform.isWindows) {
-        exit(0);
-      }
-    }
-  }
+  // onWindowClose 方法已移至 DesktopTabBarWidget 處理
 
   @override
   void dispose() {
@@ -1014,10 +942,7 @@ buildRightPane(BuildContext context) {
     Get.delete<RxBool>(tag: 'stop-service');
     _updateTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    windowManager.removeListener(this);
-    // 重置全局關閉狀態
-    _globalIsClosing = false;
-    _lastCloseAttempt = null;
+    // windowManager 監聽器已移至 DesktopTabBarWidget 處理
     super.dispose();
   }
 
