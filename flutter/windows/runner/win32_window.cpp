@@ -191,7 +191,12 @@ Win32Window::MessageHandler(HWND hwnd,
                             UINT const message,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
-  switch (message) {
+switch (message) {
+    case WM_CLOSE:
+  // 不要立即銷毀視窗，讓 Flutter 處理關閉事件
+  // 當 Flutter 呼叫 windowManager.close() 時才會真的銷毀視窗
+      return 0;
+      
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();

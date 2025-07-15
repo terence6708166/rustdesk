@@ -630,21 +630,50 @@ buildRightPane(BuildContext context) {
         content != 'install_daemon_tip') {
       return const SizedBox();
     }
-    void closeCard() async {
-      if (closeOption != null) {
-        await bind.mainSetLocalOption(key: closeOption, value: 'N');
-        if (bind.mainGetLocalOption(key: closeOption) == 'N') {
+void closeCard() async {
+      bool shouldClose = true;
+      
+      // 如果是未安裝版本，顯示確認對話框
+      if (!bind.mainIsInstalled()) {
+        final bool? userConfirmed = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('確認'),
+              content: Text('關閉此視窗後無法進行遠端連線，是否確認關閉視窗。'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text('確認'),
+                ),
+              ],
+            );
+          },
+        );
+        shouldClose = userConfirmed == true;
+      }
+
+      // 只有在確認關閉時才執行關閉邏輯
+      if (shouldClose) {
+        if (closeOption != null) {
+          await bind.mainSetLocalOption(key: closeOption, value: 'N');
+          if (bind.mainGetLocalOption(key: closeOption) == 'N') {
+            setState(() {
+              isCardClosed = true;
+            });
+          }
+        } else {
           setState(() {
             isCardClosed = true;
           });
         }
-      } else {
-        setState(() {
-          isCardClosed = true;
-        });
       }
     }
-
+	
     return Stack(
       children: [
         Container(
