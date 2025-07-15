@@ -506,7 +506,7 @@ buildRightPane(BuildContext context) {
       return buildInstallCard("", systemError, "", () {});
     }
 
-    if (isWindows && !bind.isDisableInstallation()) {
+    if (false) { // 隱藏安裝選項
       if (!bind.mainIsInstalled()) {
         return buildInstallCard(
             "", bind.isOutgoingOnly() ? "" : "install_tip", "Install",
@@ -630,7 +630,7 @@ buildRightPane(BuildContext context) {
         content != 'install_daemon_tip') {
       return const SizedBox();
     }
-void closeCard() async {
+    void closeCard() async {
       bool shouldClose = true;
       
       // 如果是未安裝版本，顯示確認對話框
@@ -673,7 +673,7 @@ void closeCard() async {
         }
       }
     }
-	
+
     return Stack(
       children: [
         Container(
@@ -772,6 +772,7 @@ void closeCard() async {
   @override
   void initState() {
     super.initState();
+    // 窗口關閉事件現在由 DesktopTabBarWidget 處理，避免重複監聽
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
       await gFFI.serverModel.fetchID();
       final error = await bind.mainGetError();
@@ -933,12 +934,15 @@ void closeCard() async {
     }
   }
 
+  // onWindowClose 方法已移至 DesktopTabBarWidget 處理
+
   @override
   void dispose() {
     _uniLinksSubscription?.cancel();
     Get.delete<RxBool>(tag: 'stop-service');
     _updateTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    // windowManager 監聽器已移至 DesktopTabBarWidget 處理
     super.dispose();
   }
 
