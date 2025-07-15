@@ -939,15 +939,22 @@ buildRightPane(BuildContext context) {
     }
   }
 
+  bool _isClosing = false;
+
   @override
   void onWindowClose() async {
+    // 防止重複觸發
+    if (_isClosing) {
+      return;
+    }
+    
     // 如果是未安裝版本，顯示確認對話框
     if (!bind.mainIsInstalled()) {
-      // 設置防止關閉，避免重複觸發
-      await windowManager.setPreventClose(true);
+      _isClosing = true;
       
       final bool? userConfirmed = await showDialog<bool>(
         context: context,
+        barrierDismissible: false, // 防止點擊外部關閉對話框
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('確認'),
@@ -974,8 +981,8 @@ buildRightPane(BuildContext context) {
           exit(0);
         }
       } else {
-        // 用戶取消，保持防止關閉狀態
-        await windowManager.setPreventClose(true);
+        // 用戶取消，重置關閉狀態
+        _isClosing = false;
       }
     } else {
       // 已安裝版本直接關閉
