@@ -3,7 +3,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
     [
         ("Status", "狀態"),
         ("Your Desktop", "歡迎使用遠端協助"),
-        ("desk_tip", "請提供下面資訊來進行線上協助"),
+        ("desk_tip", "請提供下面的 ID 及 密碼"),
         ("Password", "密碼"),
         ("Ready", "就緒"),
         ("Established", "已建立"),
