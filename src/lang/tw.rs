@@ -2,8 +2,8 @@ lazy_static::lazy_static! {
 pub static ref T: std::collections::HashMap<&'static str, &'static str> =
     [
         ("Status", "狀態"),
-        ("Your Desktop", "您的桌面"),
-        ("desk_tip", "您可以透過此 ID 及密碼存取您的桌面"),
+        ("Your Desktop", "歡迎使用遠端協助"),
+        ("desk_tip", "請提供下面資訊來進行線上協助"),
         ("Password", "密碼"),
         ("Ready", "就緒"),
         ("Established", "已建立"),
@@ -172,7 +172,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Local Port", "本機連接埠"),
         ("Local Address", "本機位址"),
         ("Change Local Port", "修改本機連接埠"),
-        ("setup_server_tip", "伺服器連接正常，隨時可以馬上做遠端操作的服務"),
+        ("setup_server_tip", "伺服器連接正常."),
         ("Too short, at least 6 characters.", "過短，至少需要 6 個字元。"),
         ("The confirmation is not identical.", "兩次輸入不相符"),
         ("Permissions", "權限"),
