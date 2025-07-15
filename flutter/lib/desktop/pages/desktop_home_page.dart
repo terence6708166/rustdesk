@@ -773,6 +773,11 @@ buildRightPane(BuildContext context) {
   void initState() {
     super.initState();
     windowManager.addListener(this);
+    
+    // 為未安裝版本設置初始關閉防護
+    if (!bind.mainIsInstalled()) {
+      windowManager.setPreventClose(true);
+    }
     _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
       await gFFI.serverModel.fetchID();
       final error = await bind.mainGetError();
@@ -938,6 +943,9 @@ buildRightPane(BuildContext context) {
   void onWindowClose() async {
     // 如果是未安裝版本，顯示確認對話框
     if (!bind.mainIsInstalled()) {
+      // 設置防止關閉，避免重複觸發
+      await windowManager.setPreventClose(true);
+      
       final bool? userConfirmed = await showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
@@ -959,16 +967,19 @@ buildRightPane(BuildContext context) {
       );
       
       if (userConfirmed == true) {
-        // 完全退出應用程序
+        // 用戶確認關閉，取消防止關閉並退出
+        await windowManager.setPreventClose(false);
         await windowManager.close();
         if (Platform.isWindows) {
           exit(0);
         }
+      } else {
+        // 用戶取消，保持防止關閉狀態
+        await windowManager.setPreventClose(true);
       }
-      // 如果用戶取消，不調用 super.onWindowClose()，直接返回
-      return;
     } else {
       // 已安裝版本直接關閉
+      await windowManager.setPreventClose(false);
       await windowManager.close();
       if (Platform.isWindows) {
         exit(0);
