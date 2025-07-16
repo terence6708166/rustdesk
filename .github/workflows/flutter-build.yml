@@ -236,7 +236,7 @@ jobs:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
           path: rustdesk
 
-      - name: Sign rustdesk files with SSL.com eSigner
+      - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
         uses: sslcom/esigner-codesign@develop
         with:
@@ -245,10 +245,8 @@ jobs:
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          dir_path: ./rustdesk
-          malware_block: false
-          override: true
-          environment_name: PROD
+          file_path: ./rustdesk/rustdesk.exe
+          output_path: ./rustdesk/rustdesk.exe
 
       - name: Build self-extracted executable
         shell: bash
@@ -275,7 +273,7 @@ jobs:
           mv ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.msi
           sha256sum ../../SignOutput/rustdesk-*.msi
 
-      - name: Sign rustdesk self-extracted file with SSL.com eSigner
+      - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
         uses: sslcom/esigner-codesign@develop
         with:
@@ -284,10 +282,8 @@ jobs:
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          dir_path: ./SignOutput
-          malware_block: false
-          override: true
-          environment_name: PROD
+          file_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+          output_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
@@ -410,7 +406,7 @@ jobs:
             ls -l ./libs/portable/Runner.res;
           fi
 
-      - name: Sign rustdesk files with SSL.com eSigner
+      - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
         uses: sslcom/esigner-codesign@develop
         with:
@@ -419,10 +415,8 @@ jobs:
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          dir_path: ./Release
-          malware_block: false
-          override: true
-          environment_name: PROD
+          file_path: ./Release/rustdesk.exe
+          output_path: ./Release/rustdesk.exe
 
       - name: Build self-extracted executable
         shell: bash
@@ -435,7 +429,7 @@ jobs:
           mkdir -p ./SignOutput
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
 
-      - name: Sign rustdesk self-extracted file with SSL.com eSigner
+      - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
         uses: sslcom/esigner-codesign@develop
         with:
@@ -444,10 +438,8 @@ jobs:
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          dir_path: ./SignOutput
-          malware_block: false
-          override: true
-          environment_name: PROD
+          file_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
+          output_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
