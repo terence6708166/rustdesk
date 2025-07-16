@@ -236,18 +236,18 @@ jobs:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
           path: rustdesk
 
+      - name: Download and setup CodeSignTool
+        if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://www.ssl.com/download/codesigntool-for-windows/" -OutFile "CodeSignTool.zip"
+          Expand-Archive -Path "CodeSignTool.zip" -DestinationPath "CodeSignTool"
+          
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
-        with:
-          command: sign
-          username: ${{ secrets.SSL_USERNAME }}
-          password: ${{ secrets.SSL_PASSWORD }}
-          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
-          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          file_path: ./rustdesk/rustdesk.exe
-          override: true
-          malware_block: false
+        shell: pwsh
+        run: |
+          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\rustdesk\rustdesk.exe" -override
 
       - name: Build self-extracted executable
         shell: bash
@@ -276,16 +276,9 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
-        with:
-          command: sign
-          username: ${{ secrets.SSL_USERNAME }}
-          password: ${{ secrets.SSL_PASSWORD }}
-          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
-          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          file_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
-          override: true
-          malware_block: false
+        shell: pwsh
+        run: |
+          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\SignOutput\rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe" -override
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
@@ -408,18 +401,18 @@ jobs:
             ls -l ./libs/portable/Runner.res;
           fi
 
+      - name: Download and setup CodeSignTool (Sciter)
+        if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://www.ssl.com/download/codesigntool-for-windows/" -OutFile "CodeSignTool.zip"
+          Expand-Archive -Path "CodeSignTool.zip" -DestinationPath "CodeSignTool"
+          
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
-        with:
-          command: sign
-          username: ${{ secrets.SSL_USERNAME }}
-          password: ${{ secrets.SSL_PASSWORD }}
-          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
-          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          file_path: ./Release/rustdesk.exe
-          override: true
-          malware_block: false
+        shell: pwsh
+        run: |
+          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\Release\rustdesk.exe" -override
 
       - name: Build self-extracted executable
         shell: bash
@@ -434,16 +427,9 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
-        with:
-          command: sign
-          username: ${{ secrets.SSL_USERNAME }}
-          password: ${{ secrets.SSL_PASSWORD }}
-          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
-          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
-          file_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
-          override: true
-          malware_block: false
+        shell: cmd
+        run: |
+          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\SignOutput\rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe" -override
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
