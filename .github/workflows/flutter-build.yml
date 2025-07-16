@@ -238,14 +238,16 @@ jobs:
 
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/actions-codesigner@develop
+        uses: sslcom/esigner-codesign@develop
         with:
+          command: sign
           username: ${{ secrets.SSL_USERNAME }}
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
           file_path: ./rustdesk/rustdesk.exe
-          output_path: ./rustdesk/rustdesk.exe
+          override: true
+          malware_block: false
 
       - name: Build self-extracted executable
         shell: bash
@@ -274,14 +276,16 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/actions-codesigner@develop
+        uses: sslcom/esigner-codesign@develop
         with:
+          command: sign
           username: ${{ secrets.SSL_USERNAME }}
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
           file_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
-          output_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+          override: true
+          malware_block: false
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
@@ -406,14 +410,16 @@ jobs:
 
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/actions-codesigner@develop
+        uses: sslcom/esigner-codesign@develop
         with:
+          command: sign
           username: ${{ secrets.SSL_USERNAME }}
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
           file_path: ./Release/rustdesk.exe
-          output_path: ./Release/rustdesk.exe
+          override: true
+          malware_block: false
 
       - name: Build self-extracted executable
         shell: bash
@@ -428,14 +434,16 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/actions-codesigner@develop
+        uses: sslcom/esigner-codesign@develop
         with:
+          command: sign
           username: ${{ secrets.SSL_USERNAME }}
           password: ${{ secrets.SSL_PASSWORD }}
           credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
           totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
           file_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
-          output_path: ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe
+          override: true
+          malware_block: false
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
