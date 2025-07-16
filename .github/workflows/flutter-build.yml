@@ -238,7 +238,7 @@ jobs:
 
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
+        uses: sslcom/actions-codesigner@develop
         with:
           command: sign
           username: ${{ secrets.SSL_USERNAME }}
@@ -275,7 +275,7 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
+        uses: sslcom/actions-codesigner@develop
         with:
           command: sign
           username: ${{ secrets.SSL_USERNAME }}
@@ -408,7 +408,7 @@ jobs:
 
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
+        uses: sslcom/actions-codesigner@develop
         with:
           command: sign
           username: ${{ secrets.SSL_USERNAME }}
@@ -431,7 +431,7 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        uses: sslcom/esigner-codesign@develop
+        uses: sslcom/actions-codesigner@develop
         with:
           command: sign
           username: ${{ secrets.SSL_USERNAME }}
