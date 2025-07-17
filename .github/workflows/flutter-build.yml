@@ -236,18 +236,17 @@ jobs:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
           path: rustdesk
 
-      - name: Download and setup CodeSignTool
+      - name: Sign rustdesk.exe with SSL.com CodeSignTool
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://www.ssl.com/download/codesigntool-for-windows/" -OutFile "CodeSignTool.zip"
-          Expand-Archive -Path "CodeSignTool.zip" -DestinationPath "CodeSignTool"
-          
-      - name: Sign rustdesk files
-        if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        shell: pwsh
-        run: |
-          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\rustdesk\rustdesk.exe" -override
+        uses: sslcom/actions-codesigner@develop
+        with:
+          command: sign
+          username: ${{ secrets.SSL_USERNAME }}
+          password: ${{ secrets.SSL_PASSWORD }}
+          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
+          file_path: "./rustdesk/rustdesk.exe"
+          output_path: "./rustdesk"
 
       - name: Build self-extracted executable
         shell: bash
@@ -274,11 +273,17 @@ jobs:
           mv ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.msi
           sha256sum ../../SignOutput/rustdesk-*.msi
 
-      - name: Sign rustdesk self-extracted file
+      - name: Sign rustdesk self-extracted file with SSL.com CodeSignTool
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        shell: pwsh
-        run: |
-          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\SignOutput\rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe" -override
+        uses: sslcom/actions-codesigner@develop
+        with:
+          command: sign
+          username: ${{ secrets.SSL_USERNAME }}
+          password: ${{ secrets.SSL_PASSWORD }}
+          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
+          file_path: "./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe"
+          output_path: "./SignOutput"
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
@@ -385,6 +390,18 @@ jobs:
           rm -rf ./usbmmidd_v2/deviceinstaller.exe ./usbmmidd_v2/usbmmidd.bat
           mv ./usbmmidd_v2 ./Release || true
 
+      - name: Sign rustdesk.exe with SSL.com CodeSignTool (Sciter)
+        if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
+        uses: sslcom/actions-codesigner@develop
+        with:
+          command: sign
+          username: ${{ secrets.SSL_USERNAME }}
+          password: ${{ secrets.SSL_PASSWORD }}
+          credential_id: ${{ secrets.SSL_CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.SSL_TOTP_SECRET }}
+          file_path: "./Release/rustdesk.exe"
+          output_path: "./Release"
+
       - name: find Runner.res
         # Windows: find Runner.res (compiled from ./flutter/windows/runner/Runner.rc), copy to ./Runner.res
         # Runner.rc does not contain actual version, but Runner.res does
@@ -401,18 +418,66 @@ jobs:
             ls -l ./libs/portable/Runner.res;
           fi
 
+      # 方案說明：
+      # SSL.com 官方推薦使用 sslcom/actions-codesigner@develop Action，但該 Action 基於 Docker 容器，
+      # 只能在 Linux 環境下運行，而此工作流程使用 Windows 環境。
+      # 因此採用直接下載 CodeSignTool 的方式作為臨時解決方案。
+      # 建議長期方案：將簽名步驟分離到獨立的 Linux 任務中使用官方 Action。
       - name: Download and setup CodeSignTool (Sciter)
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://www.ssl.com/download/codesigntool-for-windows/" -OutFile "CodeSignTool.zip"
-          Expand-Archive -Path "CodeSignTool.zip" -DestinationPath "CodeSignTool"
+          try {
+            Write-Host "Downloading CodeSignTool from SSL.com..."
+            Invoke-WebRequest -Uri "https://www.ssl.com/download/codesigntool-for-windows/" -OutFile "CodeSignTool.zip" -TimeoutSec 30
+            
+            Write-Host "Extracting CodeSignTool..."
+            Expand-Archive -Path "CodeSignTool.zip" -DestinationPath "CodeSignTool" -Force
+            
+            Write-Host "Searching for CodeSignTool.bat..."
+            $batFiles = Get-ChildItem -Path "CodeSignTool" -Recurse -Filter "CodeSignTool.bat"
+            
+            if ($batFiles.Count -eq 0) {
+              Write-Host "CodeSignTool.bat not found. Directory structure:"
+              Get-ChildItem -Path "CodeSignTool" -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
+              throw "CodeSignTool.bat not found in extracted files"
+            }
+            
+            $batFile = $batFiles[0]
+            Write-Host "Found CodeSignTool.bat at: $($batFile.FullName)"
+            
+            # 測試 CodeSignTool 是否可執行
+            Write-Host "Testing CodeSignTool..."
+            & $batFile.FullName --help 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+              Write-Warning "CodeSignTool test failed, but continuing..."
+            }
+            
+            # 設置環境變量供後續步驟使用
+            echo "CODESIGN_BAT_PATH=$($batFile.FullName)" >> $env:GITHUB_ENV
+            Write-Host "CodeSignTool setup completed successfully"
+            
+          } catch {
+            Write-Error "Failed to setup CodeSignTool: $($_.Exception.Message)"
+            exit 1
+          }
           
       - name: Sign rustdesk files
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
         shell: pwsh
         run: |
-          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\Release\rustdesk.exe" -override
+          if ($env:CODESIGN_BAT_PATH) {
+            Write-Host "Using CodeSignTool.bat at: $env:CODESIGN_BAT_PATH"
+            & $env:CODESIGN_BAT_PATH sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\Release\rustdesk.exe" -override
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Code signing failed with exit code $LASTEXITCODE"
+              exit 1
+            }
+            Write-Host "Successfully signed rustdesk.exe"
+          } else {
+            Write-Error "CODESIGN_BAT_PATH environment variable not set"
+            exit 1
+          }
 
       - name: Build self-extracted executable
         shell: bash
@@ -427,9 +492,17 @@ jobs:
 
       - name: Sign rustdesk self-extracted file
         if: env.UPLOAD_ARTIFACT == 'true' && env.SSL_USERNAME != ''
-        shell: cmd
+        shell: pwsh
         run: |
-          .\CodeSignTool\CodeSignTool.bat sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\SignOutput\rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe" -override
+          $batFile = Get-ChildItem -Path "CodeSignTool" -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          if ($batFile) {
+            Write-Host "Using CodeSignTool.bat at: $($batFile.FullName)"
+            & $batFile.FullName sign -username="${{ secrets.SSL_USERNAME }}" -password="${{ secrets.SSL_PASSWORD }}" -credential_id="${{ secrets.SSL_CREDENTIAL_ID }}" -totp_secret="${{ secrets.SSL_TOTP_SECRET }}" -input_file_path=".\SignOutput\rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.exe" -override
+          } else {
+            Write-Error "CodeSignTool.bat not found"
+            exit 1
+          }
+
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
