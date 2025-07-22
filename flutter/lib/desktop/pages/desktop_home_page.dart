@@ -92,6 +92,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       buildTip(context),
       if (!isOutgoingOnly) buildIDBoard(context),
       if (!isOutgoingOnly) buildPasswordBoard(context),
+	  if (!isOutgoingOnly) OnlineStatusWidget().marginOnly(bottom: 6, right: 6),
       FutureBuilder<Widget>(
         future: Future.value(
             Obx(() => buildHelpCards(stateGlobal.updateUrl.value))),
@@ -115,15 +116,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     if (isIncomingOnly) {
       children.addAll([
         Divider(),
-        OnlineStatusWidget(
-          onSvcStatusChanged: () {
-            if (isInHomePage()) {
-              Future.delayed(Duration(milliseconds: 300), () {
-                _updateWindowSize();
-              });
-            }
-          },
-        ).marginOnly(bottom: 6, right: 6)
+
       ]);
     }
     final textColor = Theme.of(context).textTheme.titleLarge?.color;
@@ -225,8 +218,8 @@ buildRightPane(BuildContext context) {
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 16),
-              OnlineStatusWidget(),
+          //    SizedBox(height: 16),
+          //    OnlineStatusWidget(),
             ],
           ),
         ),
