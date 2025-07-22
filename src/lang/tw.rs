@@ -145,7 +145,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Failed to make direct connection to remote desktop", "無法直接連線到遠端桌面"),
         ("Set Password", "設定密碼"),
         ("OS Password", "作業系統密碼"),
-        ("install_tip", "需要開機自動啟動遠端程式及增加權限的話，請點下面安裝選項，臨時連線無需安裝。"),
+        ("install_tip", "如需開機自動啟動遠端請點安裝，臨時連線不用安裝。"),
         ("Click to upgrade", "點選以升級"),
         ("Click to download", "點選以下載"),
         ("Click to update", "點選以更新"),
